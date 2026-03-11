@@ -1,0 +1,22 @@
+<configuration>
+    <conversionRule conversionWord="clr"
+                    converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <appender name="SYNC_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/sync-activities.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %clr(%msg){green}</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.example.multidbsyncservice.service" level="INFO">
+        <appender-ref ref="SYNC_FILE"/>
+    </logger>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
