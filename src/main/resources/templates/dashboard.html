@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sync Monitor</title>
+    <style>
+        /* ... your existing styles ... */
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #001529; color: white; }
+        .row-create { background-color: #f6ffed; border-left: 5px solid #52c41a; }
+        .row-update { background-color: #e6f7ff; border-left: 5px solid #1890ff; }
+        .tag { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .tag-create { background: #b7eb8f; color: #237804; }
+        .tag-update { background: #91d5ff; color: #0050b3; }
+    </style>
+    <meta http-equiv="refresh" content="5">
+</head>
+<body>
+<div class="container">
+    <h2>Sync Monitoring Dashboard</h2>
+    <!--    v2.0 metrics-->
+<!--    <div style="display: flex; gap: 20px; margin-bottom: 20px;">-->
+<!--        <div th:with="-->
+<!--        total=${records.size()},-->
+<!--        createdCount=${#lists.toList(records).?[#strings.contains(documentName, 'Generated')].size()},-->
+<!--        updatedCount=${total - createdCount},-->
+<!--        createPercent=${total > 0 ? (createdCount * 100 / total) : 0},-->
+<!--        updatePercent=${total > 0 ? (updatedCount * 100 / total) : 0}"-->
+<!--             style="display: contents;">-->
+
+<!--            <div style="background: white; padding: 15px; border-radius: 8px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #52c41a;">-->
+<!--                <div style="color: #888; font-size: 12px; display: flex; justify-content: space-between;">-->
+<!--                    <span>CREATED</span>-->
+<!--                    <span th:text="${createPercent} + '%'">0%</span>-->
+<!--                </div>-->
+<!--                <div style="font-size: 24px; font-weight: bold; color: #237804;" th:text="${createdCount}">0</div>-->
+<!--                <div style="height: 4px; background: #f0f0f0; margin-top: 8px; border-radius: 2px;">-->
+<!--                    <div th:style="'height: 100%; background: #52c41a; border-radius: 2px; width: ' + ${createPercent} + '%;'"></div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div style="background: white; padding: 15px; border-radius: 8px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #1890ff;">-->
+<!--                <div style="color: #888; font-size: 12px; display: flex; justify-content: space-between;">-->
+<!--                    <span>UPDATED</span>-->
+<!--                    <span th:text="${updatePercent} + '%'">0%</span>-->
+<!--                </div>-->
+<!--                <div style="font-size: 24px; font-weight: bold; color: #0050b3;" th:text="${updatedCount}">0</div>-->
+<!--                <div style="height: 4px; background: #f0f0f0; margin-top: 8px; border-radius: 2px;">-->
+<!--                    <div th:style="'height: 100%; background: #1890ff; border-radius: 2px; width: ' + ${updatePercent} + '%;'"></div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div style="background: white; padding: 15px; border-radius: 8px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">-->
+<!--                <div style="color: #888; font-size: 12px;">LATEST SOURCE</div>-->
+<!--                <div style="font-size: 24px; font-weight: bold; color: #001529; padding-top: 4px;"-->
+<!--                     th:text="${records.isEmpty() ? 'N/A' : records[0].sourceSystem}">source-0-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--
+valid metrics
+<div th:with="-->
+<!--    total=${records.size()},-->
+<!--    createdCount=${#lists.toList(records).?[#strings.contains(documentName, 'Generated')].size()},-->
+<!--    updatedCount=${total - createdCount},-->
+<!--    uniqueSources=${#sets.size(#sets.toSet(#lists.toList(records).![sourceSystem]))},-->
+<!--    totalAmount=${#aggregates.sum(records.![amount])},-->
+<!--    createPercent=${total > 0 ? (createdCount * 100 / total) : 0}"-->
+<!--         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">-->
+
+<!--        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #52c41a;">-->
+<!--            <div style="color: #888; font-size: 11px; font-weight: bold;">CREATED</div>-->
+<!--            <div style="font-size: 22px; font-weight: bold; color: #237804;" th:text="${createdCount}">0</div>-->
+<!--            <div style="font-size: 11px; color: #52c41a;" th:text="${createPercent} + '% of batch'"></div>-->
+<!--        </div>-->
+
+<!--        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #1890ff;">-->
+<!--            <div style="color: #888; font-size: 11px; font-weight: bold;">UPDATED</div>-->
+<!--            <div style="font-size: 22px; font-weight: bold; color: #0050b3;" th:text="${updatedCount}">0</div>-->
+<!--            <div style="font-size: 11px; color: #1890ff;" th:text="${total > 0 ? (updatedCount * 100 / total) : 0} + '% of batch'"></div>-->
+<!--        </div>-->
+
+<!--        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #722ed1;">-->
+<!--            <div style="color: #888; font-size: 11px; font-weight: bold;">ACTIVE SOURCES</div>-->
+<!--            <div style="font-size: 22px; font-weight: bold; color: #391085;">-->
+<!--                <span th:text="${uniqueSources}">0</span><span style="font-size: 14px; color: #bfbfbf;"> / 10</span>-->
+<!--            </div>-->
+<!--            <div style="font-size: 11px; color: #722ed1;">Coverage across systems</div>-->
+<!--        </div>-->
+
+<!--        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #faad14;">-->
+<!--            <div style="color: #888; font-size: 11px; font-weight: bold;">BATCH VALUE</div>-->
+<!--            <div style="font-size: 22px; font-weight: bold; color: #d48806;">-->
+<!--                $<span th:text="${#numbers.formatDecimal(totalAmount ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>-->
+<!--            </div>-->
+<!--            <div style="font-size: 11px; color: #faad14;">Sum of current batch</div>-->
+<!--        </div>-->
+
+<!--        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">-->
+<!--            <div style="color: #888; font-size: 11px; font-weight: bold;">LATEST SYNC</div>-->
+<!--            <div style="font-size: 18px; font-weight: bold; color: #001529; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px;"-->
+<!--                 th:text="${records.isEmpty() ? 'N/A' : records[0].sourceSystem}">source-0-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+    <div th:with="
+    total=${records.size()},
+    createdCount=${#lists.toList(records).?[#strings.contains(documentName, 'Generated')].size()},
+    updatedCount=${total - createdCount},
+    uniqueSources=${#sets.size(#sets.toSet(#lists.toList(records).![sourceSystem]))},
+    totalAmount=${#aggregates.sum(records.![amount])},
+    financeCount=${#lists.toList(records).?[documentCategory == 'FINANCE'].size()},
+    legalCount=${#lists.toList(records).?[documentCategory == 'LEGAL'].size()},
+    hrCount=${#lists.toList(records).?[documentCategory == 'HR'].size()},
+    opsCount=${#lists.toList(records).?[documentCategory == 'OPERATIONS'].size()},
+    activeStatusCount=${#lists.toList(records).?[documentStatus == 'ACTIVE'].size()}"
+
+         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+
+        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #52c41a;">
+            <div style="color: #888; font-size: 11px; font-weight: bold;">CREATED</div>
+            <div style="font-size: 22px; font-weight: bold; color: #237804;" th:text="${createdCount}">0</div>
+            <div style="font-size: 11px; color: #52c41a;" th:text="${total > 0 ? (createdCount * 100 / total) : 0} + '% of batch'"></div>
+        </div>
+
+        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #1890ff;">
+            <div style="color: #888; font-size: 11px; font-weight: bold;">UPDATED</div>
+            <div style="font-size: 22px; font-weight: bold; color: #0050b3;" th:text="${updatedCount}">0</div>
+            <div style="font-size: 11px; color: #1890ff;" th:text="${total > 0 ? (updatedCount * 100 / total) : 0} + '% of batch'"></div>
+        </div>
+
+        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #13c2c2;">
+            <div style="color: #888; font-size: 11px; font-weight: bold;">STATUS: ACTIVE</div>
+            <div style="font-size: 22px; font-weight: bold; color: #006d75;">
+                <span th:text="${activeStatusCount}">0</span><span style="font-size: 14px; color: #bfbfbf;"> / 50</span>
+            </div>
+            <div style="font-size: 11px; color: #13c2c2;">Total active documents</div>
+        </div>
+
+        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #faad14;">
+            <div style="color: #888; font-size: 11px; font-weight: bold;">BATCH VALUE</div>
+            <div style="font-size: 22px; font-weight: bold; color: #d48806;">
+                $<span th:text="${#numbers.formatDecimal(totalAmount ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+            </div>
+            <div style="font-size: 11px; color: #faad14;">Throughput value</div>
+        </div>
+
+        <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.10) inset;">
+            <div style="color: #888; font-size: 11px; font-weight: bold;">LATEST SYNC</div>
+            <div style="font-size: 18px; font-weight: bold; color: #001529; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px;"
+                 th:text="${records.isEmpty() ? 'N/A' : records[0].sourceSystem}">source-0
+            </div>
+        </div>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>Source</th>
+            <th>Document ID</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Synced At (Local)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="data : ${records}"
+            th:with="isCreated=${#strings.contains(data.documentName, 'Generated')}"
+            th:classappend="${isCreated} ? 'row-create' : 'row-update'">
+
+            <td th:text="${data.sourceSystem}">source-1</td>
+            <td th:text="${#strings.substring(data.sourceDocumentId, 0, 8) + '...'}" style="font-family: monospace;">ID</td>
+            <td>
+                <span th:if="${isCreated}" style="font-style: italic; color: #52c41a;" th:text="${data.documentName}"></span>
+                <span th:unless="${isCreated}" th:text="${data.documentName}">Existing Name</span>
+            </td>
+            <td>
+                <span th:if="${isCreated}" class="tag tag-create">Created</span>
+                <span th:unless="${isCreated}" class="tag tag-update">Updated</span>
+            </td>
+
+            <td class="sync-time"
+                th:data-utc="${data.syncedAt}"
+                th:text="${#strings.substring(data.syncedAt, 11, 19)}"
+                style="color: #888; font-weight: normal;">
+                12:00:01
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function convertTimes() {
+        document.querySelectorAll('.sync-time').forEach(el => {
+            const utcString = el.getAttribute('data-utc');
+            if (utcString) {
+                // The 'Z' at the end ensures the browser treats it as UTC
+                const dateStr = utcString.endsWith('Z') ? utcString : utcString + 'Z';
+                const date = new Date(dateStr);
+
+                // Formats to your local time (Skopje)
+                el.innerText = date.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+            }
+        });
+    }
+    // Run on load
+    convertTimes();
+</script>
+</body>
+</html>

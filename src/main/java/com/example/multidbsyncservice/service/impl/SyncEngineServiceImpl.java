@@ -99,15 +99,11 @@ public class SyncEngineServiceImpl implements SyncEngineService {
     private List<SourceDocument> fetchBatchFromSource(Connection conn, String cursor, int limit) {
         List<SourceDocument> batch = new ArrayList<>();
 
-        // SQLite string comparison works best with ISO-8601 format
-//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-//        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String cursorStr = cursor;
 
         String sql = "SELECT * FROM documents WHERE last_modified_at > ? ORDER BY last_modified_at ASC LIMIT ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, cursorStr);
+            pstmt.setString(1, cursor);
             pstmt.setInt(2, limit);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -122,7 +118,6 @@ public class SyncEngineServiceImpl implements SyncEngineService {
 
 
                     // Parse the SQLite string back into a Java Date
-                    String dateStr = rs.getString("last_modified_at");
                     try {
 
                         doc.setLastModifiedAt(rs.getString("last_modified_at"));
