@@ -48,36 +48,47 @@ public class SyncEngineServiceImpl implements SyncEngineService {
     private void processSourceSequentially(String sourceName, Connection conn) {
         // 1. Get the Bookmark (Metadata)
         SyncMetadata metadata = metadataRepository.findById(sourceName)
-                .orElse(new SyncMetadata(sourceName, new Date(0).toString()));
+                .orElse(new SyncMetadata(sourceName, "1970-01-01T00:00:00Z", ""));
 
-        String currentCursor = metadata.getLastSuccessfulSync();
+        String cursorTimestamp = metadata.getLastSuccessfulSync();
+        String cursorId = metadata.getLastCursorId();
         int batchSize = 100;
         int totalProcessed = 0;
 
         while (true) {
 
-            List<SourceDocument> batch = fetchBatchFromSource(conn, currentCursor, batchSize);
+            List<SourceDocument> batch = fetchBatchFromSource(conn, cursorTimestamp, cursorId,batchSize);
 
             if (batch.isEmpty()) break;
 
+            List<String> ids = batch.stream().map(SourceDocument::getId).toList();
+
+            List<SynchronizedData> existingDocs =
+                    dataRepository.findAllBySourceSystemAndSourceDocumentIdIn(sourceName, ids);
+
+            Map<String, SynchronizedData> existingMap = new HashMap<>();
+
+            for (SynchronizedData doc : existingDocs) {
+                existingMap.put(doc.getSourceDocumentId(), doc);
+            }
             // 3. Process the batch (Upsert logic)
             List<SynchronizedData> entitiesToSave = new ArrayList<>();
             for (SourceDocument row : batch) {
-                SynchronizedData entity = dataRepository
-                        .findBySourceSystemAndSourceDocumentId(sourceName, row.getId())
-                        .orElseGet(() -> {
-                            SynchronizedData newDoc = new SynchronizedData();
-                            newDoc.setId(UUID.randomUUID().toString());
-                            newDoc.setSourceSystem(sourceName);
-                            newDoc.setSourceDocumentId(row.getId());
-                            return newDoc;
-                        });
-
+                SynchronizedData entity = existingMap.get(row.getId());
+                if(entity == null){
+                    entity = new SynchronizedData();
+                    entity.setId((UUID.randomUUID().toString()));
+                    entity.setSourceDocumentId(row.getId());
+                    entity.setSourceSystem(sourceName);
+                }
                 mapProperties(row, entity);
                 entitiesToSave.add(entity);
-
-                // Update cursor to the latest timestamp in this batch
-                currentCursor = row.getLastModifiedAt();
+                cursorTimestamp = row.getLastModifiedAt();
+                cursorId = row.getId();
+                System.out.println(
+                        "[DEBUG] Fetching with cursor=" + cursorId +
+                                " cursorId=" + cursorId
+                );
             }
 
             // 4. Batch Save to Central DB (High Performance)
@@ -88,7 +99,8 @@ public class SyncEngineServiceImpl implements SyncEngineService {
         }
 
 
-        metadata.setLastSuccessfulSync(currentCursor);
+        metadata.setLastSuccessfulSync(cursorTimestamp);
+        metadata.setLastCursorId(cursorId);
         metadataRepository.save(metadata);
 
         if (totalProcessed > 0) {
@@ -96,16 +108,19 @@ public class SyncEngineServiceImpl implements SyncEngineService {
         }
     }
 
-    private List<SourceDocument> fetchBatchFromSource(Connection conn, String cursor, int limit) {
+    private List<SourceDocument> fetchBatchFromSource(Connection conn, String cursorTimestamp, String cursorId,int limit) {
         List<SourceDocument> batch = new ArrayList<>();
 
-
-        String sql = "SELECT * FROM documents WHERE last_modified_at > ? ORDER BY last_modified_at ASC LIMIT ?";
+        System.out.println("[DEBUG] About to fetch batch from "  +
+                " | cursorTimestamp=" + cursorTimestamp +
+                " | cursorId=" + cursorId);
+        String sql = "SELECT * FROM documents WHERE (last_modified_at > ?) OR (last_modified_at = ? AND id > ?) ORDER BY last_modified_at ASC, id ASC LIMIT ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, cursor);
-            pstmt.setInt(2, limit);
-
+            pstmt.setString(1, cursorTimestamp);
+            pstmt.setString(2, cursorTimestamp);
+            pstmt.setString(3, cursorId);
+            pstmt.setInt(4, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     SourceDocument doc = new SourceDocument();
@@ -149,5 +164,6 @@ public class SyncEngineServiceImpl implements SyncEngineService {
         entity.setDocumentNumber(dto.getDocumentNumber());
         entity.setLastModifiedAt(dto.getLastModifiedAt());
         entity.setSyncedAt(Instant.now().toString());
+//        entity.setSourceSystem(dto.getId());
     }
 }

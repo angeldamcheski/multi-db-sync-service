@@ -14,9 +14,12 @@ import java.util.Date;
 @NoArgsConstructor
 public class SyncMetadata {
     @Id
-    @Column(name = "source_id")
+    @Column(name = "source_system")
     private String sourceId;
 
     @Column(name = "last_successful_sync")
     private String lastSuccessfulSync;
+
+    @Column(name = "last_cursor_id")
+    private String lastCursorId;
 }

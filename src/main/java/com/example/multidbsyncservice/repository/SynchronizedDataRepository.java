@@ -14,4 +14,6 @@ public interface SynchronizedDataRepository extends JpaRepository<SynchronizedDa
 
     @Query(value = "SELECT * FROM synchronized_data ORDER BY synced_at DESC LIMIT 50", nativeQuery = true)
     List<SynchronizedData> findRecentSyncs();
+
+    List<SynchronizedData> findAllBySourceSystemAndSourceDocumentIdIn(String sourceSystem, List<String> ids);
 }

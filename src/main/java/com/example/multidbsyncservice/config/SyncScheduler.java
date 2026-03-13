@@ -9,15 +9,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SyncScheduler {
     private final SyncEngineService syncEngineService;
-//
-//    @Scheduled(fixedDelay = 3000)
-//    public void runSync(){
-//        syncEngineService.syncAllSources();
-//    }
 
-    //Cron expression to sync sources every minute
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(fixedDelay = 3000)
     public void runSync(){
         syncEngineService.syncAllSources();
     }
+
+    //Cron expression to sync sources every minute
+//    @Scheduled(cron = "0 * * * * *")
+//    public void runSync(){
+//        syncEngineService.syncAllSources();
+//    }
 }
